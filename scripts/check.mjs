@@ -29,7 +29,11 @@ for (const line of git('diff', '--unified=0', '--no-color', '--no-ext-diff', '--
   else if (line.startsWith('+') && cur) added.get(cur).push(line.slice(1).replace(/\r$/, ''));
   else if (line.startsWith('-')) removedCount++;
 }
+// Vendored, generated and lock files are never the agent's work, even when they aren't gitignored.
+const VENDOR = /(^|\/)(node_modules|vendor|\.venv|venv|__pycache__|dist|build|out|\.next|coverage)(\/|$)|(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|poetry\.lock|Cargo\.lock|composer\.lock)$|\.min\.(js|css)$/;
+for (const f of [...added.keys()]) if (VENDOR.test(f)) { added.delete(f); newFiles.delete(f); }
 for (const f of git('ls-files', '--others', '--exclude-standard').split('\n').filter(Boolean)) {
+  if (VENDOR.test(f)) continue;
   try { if (statSync(f).size < 1 << 20) { added.set(f, readFileSync(f, 'utf8').split(/\r?\n/)); newFiles.add(f); } } catch {}
 }
 
