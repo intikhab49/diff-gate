@@ -1,6 +1,6 @@
 ---
 name: diff-gate
-description: Verify a finished code change before calling it done. Runs a zero-dependency script over the git diff that catches hallucinated imports and packages, new dependencies, helpers that re-implement existing code, and new logic with no test. Use after writing or editing code and before saying a coding task is complete, when reviewing an agent's or PR's diff, or when the user says "check the diff", "diff-gate", "did you over-build", or "verify your changes". Not for non-code tasks.
+description: Verify a finished code change before calling it done. Runs a zero-dependency script over the git diff that fails on imports resolving to nothing (hallucinated or slopsquatted packages, invented path aliases, files never created) and warns on new dependencies, helpers that re-implement existing code, and logic added with no test. Use after writing or editing code and before saying a coding task is complete, when reviewing an agent's or PR's diff, when checking whether an import or package is real, or when the user says "check the diff", "diff-gate", "did you invent that import", or "verify your changes". Not for non-code tasks.
 license: MIT
 ---
 

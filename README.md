@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="docs/social-preview.png" alt="diff-gate: verify what your coding agent actually changed" width="720">
+<img src="docs/social-preview.png" alt="diff-gate: catch AI-hallucinated imports before they merge" width="720">
 
 # diff-gate
 
-**Your AI agent said "done". diff-gate checks whether it invented anything.**
+**Attackers are registering packages that don't exist yet. Your agent writes the import.**
 
-A Claude Code skill and a GitHub Action that read the real `git diff` after an agent finishes and fail on imports that do not exist.
+A Claude Code skill and a GitHub Action that read the real `git diff` after an agent finishes and fail on imports that resolve to nothing.
 
 [![license](https://img.shields.io/badge/license-MIT-111111?style=flat-square)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-0-111111?style=flat-square)](scripts/check.mjs)
@@ -17,7 +17,19 @@ A Claude Code skill and a GitHub Action that read the real `git diff` after an a
 
 ---
 
-AI agents hallucinate imports. Sometimes it is a typo, sometimes the package simply does not exist, and sometimes an attacker has already registered the name an LLM likes to invent and is waiting for the install. A prompt cannot tell a real package from an imagined one. A resolver can.
+## The attack
+
+Researchers generated 576,000 code samples across 16 code-generating models and found **205,474 unique package names that exist nowhere on any registry**: at least 5.2% of packages suggested by commercial models and 21.7% by open-source ones were fiction ([We Have a Package for You!](https://arxiv.org/abs/2406.10279), USENIX Security 2025, ~19.7% across all samples as commonly reported).
+
+Those names repeat. The same model invents the same fake package for the same kind of task, which turns a hallucination into a predictable address. An attacker registers the name, waits, and eventually an agent writes the import and a CI job runs `npm install`.
+
+What arrives is not a build error. A build error would be lucky. It is a package that installs fine, and whose install script can read your `.env`, your npm token, your CI secrets and your SSH keys, or quietly mine crypto on your build machine for months.
+
+<img src="docs/how-the-attack-works.png" alt="How package hallucination becomes a supply chain attack: the model invents a name, an attacker registers it, your CI installs it" width="620">
+
+Your agent cannot protect you here. It wrote those imports from memory and has no idea which ones are real. A prompt cannot tell a real package from an imagined one either; you can instruct a model never to invent imports and it will still invent them, because it does not know that it did.
+
+A resolver can. That is all this is.
 
 ```console
 $ node scripts/check.mjs main
@@ -38,6 +50,8 @@ $ echo $?
 ```
 
 ## What it checks
+
+It runs after the agent, on the diff it left behind, so nothing depends on the model cooperating.
 
 | Check | Level | Why it exists |
 |---|---|---|
