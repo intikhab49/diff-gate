@@ -15,6 +15,6 @@ jobs:
           node-version: 22
       # Install dependencies so imports can be resolved against what is actually installed.
       - run: npm ci
-      - uses: intikhabazam/diff-gate@v1
+      - uses: intikhab49/diff-gate@v1
         # with:
         #   fail-on: warn   # block (default) | warn | never

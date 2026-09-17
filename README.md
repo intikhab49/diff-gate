@@ -36,7 +36,7 @@ The same check runs on every pull request, for people who will never install a s
 - uses: actions/setup-node@v4
   with: { node-version: 22 }
 - run: npm ci                  # so imports resolve against what's installed
-- uses: intikhabazam/diff-gate@v1
+- uses: intikhab49/diff-gate@v1
 ```
 It posts the report to the job summary and fails the job on a BLOCK finding. `fail-on: warn` tightens it, `never` only reports. Full example in [.github/workflows/example-usage.yml](.github/workflows/example-usage.yml).
 
@@ -77,6 +77,8 @@ Honest result first, because it is the one people should weigh. I ran 6 dependen
 - **diff-gate's arm wrote the most code**, because acting on its findings adds lines (a test, a real import) rather than removing them. If you want less code, that is ponytail's job, and its numbers here support it.
 - A third of runs ended with the model writing nothing at all. That is the cheap model, and it hits every arm, but it means these samples are small and only the large gaps are meaningful.
 
+Reproduce it: `benchmark/seed.sh` builds the test repo, `benchmark/run.sh` and `benchmark/run-combined.sh` run the arms, `benchmark/results.csv` is the raw output (`exit=99` marks a run where the agent changed no code).
+
 What the tool *did* catch, outside the benchmark: copy-pasted TOTP, cookie-jar and member-factory helpers across 5 test files in a real private repo; an invented `@/lib/...` alias import; and two bugs in its own scoring, found by reading raw diffs rather than trusting the summary.
 
 ## Limits
@@ -88,5 +90,3 @@ What the tool *did* catch, outside the benchmark: copy-pasted TOTP, cookie-jar a
 Inspired by the conversation around [ponytail](https://github.com/DietrichGebert/ponytail) and [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills), whose rules this complements.
 
 MIT
-
-Reproduce it: `benchmark/seed.sh` builds the test repo, `benchmark/run.sh` and `benchmark/run-combined.sh` run the arms, `benchmark/results.csv` is the raw output (`exit=99` marks a run where the agent changed no code).
