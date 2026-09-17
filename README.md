@@ -63,6 +63,22 @@ So install the line. A skill sitting in a folder does not fire on its own, and a
 - **Real duplication it found:** a TOTP helper, a cookie jar and a member factory copy-pasted into 5 test files instead of shared.
 - **Planted fixture:** caught every invented npm package, missing relative file, invented `@/` alias, fake Python module, new dependency and re-implemented helper.
 
+## What a benchmark did *not* show
+Honest result first, because it is the one people should weigh. I ran 6 dependency-trap tickets (xlsx export, timezone conversion, PDF receipt, JWT auth, rate limiting, reuse) against a seeded Express repo, on DeepSeek V4 Flash via OpenCode, in four arms: no rules, [ponytail](https://github.com/DietrichGebert/ponytail)'s ruleset, diff-gate, and both together. 30 of 48 cells completed before I stopped the run.
+
+| arm | usable runs | mean added LOC | new deps | invented imports | duplicated helpers |
+|---|--:|--:|--:|--:|--:|
+| ponytail | 4 | **21** | 4 | 0 | 0 |
+| baseline | 3 | 32 | 2 | 0 | 0 |
+| ponytail + diff-gate | 9 | 30 | 3 | 0 | 0 |
+| diff-gate | 4 | 62 | 2 | 0 | 0 |
+
+- **No arm invented an import or duplicated a helper.** On a competent model, the failure this tool exists to catch did not occur in 20 usable runs. It is insurance, not a daily win.
+- **diff-gate's arm wrote the most code**, because acting on its findings adds lines (a test, a real import) rather than removing them. If you want less code, that is ponytail's job, and its numbers here support it.
+- A third of runs ended with the model writing nothing at all. That is the cheap model, and it hits every arm, but it means these samples are small and only the large gaps are meaningful.
+
+What the tool *did* catch, outside the benchmark: copy-pasted TOTP, cookie-jar and member-factory helpers across 5 test files in a real private repo; an invented `@/lib/...` alias import; and two bugs in its own scoring, found by reading raw diffs rather than trusting the summary.
+
 ## Limits
 - Duplicates are matched by normalized top-level name. The same logic under a different name slips through.
 - Python imports are checked against the active interpreter, so run it inside your venv.
@@ -72,3 +88,5 @@ So install the line. A skill sitting in a folder does not fire on its own, and a
 Inspired by the conversation around [ponytail](https://github.com/DietrichGebert/ponytail) and [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills), whose rules this complements.
 
 MIT
+
+Reproduce it: `benchmark/seed.sh` builds the test repo, `benchmark/run.sh` and `benchmark/run-combined.sh` run the arms, `benchmark/results.csv` is the raw output (`exit=99` marks a run where the agent changed no code).
