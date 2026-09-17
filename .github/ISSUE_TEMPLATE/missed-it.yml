@@ -1,0 +1,24 @@
+name: It missed something
+description: An agent shipped a problem diff-gate should have caught
+title: "missed: "
+labels: ["missed-detection"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What got through
+      description: The import, duplicated helper, dependency or untested logic that diff-gate did not report.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected it to say
+    validations:
+      required: true
+  - type: input
+    id: lang
+    attributes:
+      label: Language
+      placeholder: TypeScript, JavaScript, Python

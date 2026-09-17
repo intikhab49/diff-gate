@@ -1,0 +1,18 @@
+# diff-gate runs on its own pull requests.
+name: diff-gate
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  self-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: ./
