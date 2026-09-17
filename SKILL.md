@@ -11,6 +11,8 @@ Rules tell an agent to write less. This checks whether it did. Run it on the rea
 ## When
 Once, after the last edit of a coding task and before you report done. Also on request, against any ref.
 
+Do the work first. This check never replaces the task, and a diff with no changes in it is not a pass, it means the task isn't done. Run the command and report what it printed. Never describe findings you reasoned out instead of running: if you did not run it, say so.
+
 ## Run
 ```
 node <this-skill-dir>/scripts/check.mjs [base-ref]

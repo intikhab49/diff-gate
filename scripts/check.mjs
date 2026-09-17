@@ -217,6 +217,7 @@ for (const [k, label] of [['block', 'BLOCK (must fix)'], ['warn', 'WARN (fix, or
   for (const x of u.slice(0, 20)) out.push('- ' + x);
   if (u.length > 20) out.push(`- ...and ${u.length - 20} more`);
 }
-if (!findings.block.length && !findings.warn.length) out.push('\nPASS: no unresolved imports, new deps, duplicate helpers, or untested logic found.');
+if (!added.size) out.push('\nNOTHING TO CHECK: this diff is empty. If a task was meant to change code, it is not done.');
+else if (!findings.block.length && !findings.warn.length) out.push('\nPASS: no unresolved imports, new deps, duplicate helpers, or untested logic found.');
 console.log(out.join('\n'));
 process.exit(findings.block.length ? 1 : 0);
