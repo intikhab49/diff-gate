@@ -34,6 +34,16 @@ node ~/.claude/skills/diff-gate/scripts/check.mjs main       # whole branch
 ```
 Exit code: `1` if there are BLOCK findings, `0` otherwise, `2` for a bad ref or not a git repo.
 
+## Does it actually run?
+Measured, not assumed. Six headless Claude Code sessions (Sonnet, one coding task, project settings only, the skill installed in `.claude/skills/`):
+
+| Setup | Ran the check |
+|---|--:|
+| Skill installed, nothing else | **0 / 3** |
+| Skill installed + the one-line CLAUDE.md instruction above | **3 / 3** |
+
+So install the line. A skill sitting in a folder does not fire on its own, and any skill claiming otherwise hasn't measured it.
+
 ## Tested on real code
 - **Two production TypeScript repos (~54k added lines, Next.js + NestJS monorepo):** 0 false BLOCKs, and all path aliases resolved via tsconfig.
 - **Real duplication it found:** a TOTP helper, a cookie jar and a member factory copy-pasted into 5 test files instead of shared.
