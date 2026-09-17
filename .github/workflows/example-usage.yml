@@ -1,0 +1,20 @@
+# Copy this into your own repo as .github/workflows/diff-gate.yml
+name: diff-gate
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # diff-gate needs history to diff against the base branch
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Install dependencies so imports can be resolved against what is actually installed.
+      - run: npm ci
+      - uses: intikhabazam/diff-gate@v1
+        # with:
+        #   fail-on: warn   # block (default) | warn | never

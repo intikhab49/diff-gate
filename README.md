@@ -27,7 +27,21 @@ Skills don't always trigger on their own. For reliable runs, add one line to you
 Before reporting a coding task done, run the diff-gate skill and fix or justify its findings.
 ```
 
-Run it by hand any time:
+### In CI
+The same check runs on every pull request, for people who will never install a skill:
+
+```yaml
+- uses: actions/checkout@v4
+  with: { fetch-depth: 0 }
+- uses: actions/setup-node@v4
+  with: { node-version: 22 }
+- run: npm ci                  # so imports resolve against what's installed
+- uses: intikhabazam/diff-gate@v1
+```
+It posts the report to the job summary and fails the job on a BLOCK finding. `fail-on: warn` tightens it, `never` only reports. Full example in [.github/workflows/example-usage.yml](.github/workflows/example-usage.yml).
+
+### By hand
+Run it any time:
 ```
 node ~/.claude/skills/diff-gate/scripts/check.mjs            # uncommitted + untracked work
 node ~/.claude/skills/diff-gate/scripts/check.mjs main       # whole branch

@@ -1,0 +1,43 @@
+name: diff-gate
+description: Check a pull request's diff for imports that do not resolve, new dependencies, duplicated helpers and untested logic.
+branding:
+  icon: git-pull-request
+  color: purple
+inputs:
+  base:
+    description: Ref to diff against. Defaults to the PR's base branch, or the previous commit on a push.
+    required: false
+    default: ''
+  fail-on:
+    description: '"block" fails only on unresolved imports (default). "warn" also fails on WARN findings. "never" only reports.'
+    required: false
+    default: block
+runs:
+  using: composite
+  steps:
+    - name: Run diff-gate
+      shell: bash
+      env:
+        DG_BASE: ${{ inputs.base }}
+        DG_FAIL_ON: ${{ inputs.fail-on }}
+        DG_EVENT: ${{ github.event_name }}
+        DG_PR_BASE: ${{ github.event.pull_request.base.ref }}
+      run: |
+        set -uo pipefail
+        base="$DG_BASE"
+        if [ -z "$base" ]; then
+          if [ "$DG_EVENT" = pull_request ]; then
+            git fetch --no-tags --depth=200 origin "$DG_PR_BASE" >/dev/null 2>&1 || true
+            base="origin/$DG_PR_BASE"
+          else
+            base=HEAD~1
+          fi
+        fi
+        report=$(node "$GITHUB_ACTION_PATH/scripts/check.mjs" "$base" 2>&1); code=$?
+        echo "$report"
+        { echo '## diff-gate'; echo; echo '```'; echo "$report"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+        case "$DG_FAIL_ON" in
+          never) exit 0 ;;
+          warn)  echo "$report" | grep -q '^### ' && exit 1 || exit 0 ;;
+          *)     exit $code ;;
+        esac
