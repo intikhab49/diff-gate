@@ -43,7 +43,9 @@ $ node scripts/check.mjs main
 ### WARN (fix, or justify in one line)
 - package.json: new dependencies dayjs@^1.11.0: for each, name what it replaces or why the stdlib or existing deps can't do it
 - 'base32Decode' newly defined in src/lib/totp.ts but already exists in tests/support/totp.ts: reuse it or say why not
-- 9 branches/loops added across 3 source file(s) and no test file touched: leave one runnable check
+
+### INFO
+- 9 branches/loops added across 3 source file(s) and no test file touched
 
 $ echo $?
 1
@@ -56,11 +58,12 @@ It runs after the agent, on the diff it left behind, so nothing depends on the m
 | Check | Level | Why it exists |
 |---|---|---|
 | Imports that resolve to nothing: invented packages, made-up `@/...` aliases, missing files, Python modules that are not importable | **BLOCK** | hallucinated imports, typosquatting and slopsquatting exposure |
+| New dependencies that do not exist on npm/PyPI, or look squatted: first published under 30 days ago, under 1,000 downloads a week, and an install script or a name one typo from a popular package | **BLOCK** | catches the attacker's package even after the agent installed it and added it to the manifest |
+| New dependencies that are obscure, brand new, or one typo from a popular name | WARN | confirm it is the package you meant |
 | New dependencies, by comparing the old and new manifest | WARN | the stdlib or an installed package usually covers it |
 | A new top-level helper whose name already exists elsewhere | WARN | agents rewrite helpers they never saw |
-| 3+ branches or loops added with no test file touched | WARN | logic shipped with nothing that fails when it breaks |
 | Tool-branded comments left in code | WARN | your repo is not an advert |
-| Imports into build output, packages installed only transitively, unverified aliases | INFO | context, not a problem |
+| Imports into build output, packages installed only transitively, unverified aliases, install scripts on established packages, 3+ branches or loops added with no test file touched | INFO | context, not a problem; the agent isn't asked to write code for it |
 
 Exit code `1` on a BLOCK finding, `0` otherwise, `2` for a bad ref or a non-git directory. In CI that fails the build. In an agent session it is a report the agent is told to act on.
 
@@ -85,6 +88,7 @@ Before reporting a coding task done, run the diff-gate skill and fix or justify 
 - uses: intikhab49/diff-gate@v1
   # with:
   #   fail-on: warn                 # block (default) | warn | never
+  #   offline: true                 # skip the npm/PyPI lookup
 ```
 The report lands in the job summary. Full example: [`.github/workflows/example-usage.yml`](.github/workflows/example-usage.yml).
 
@@ -133,6 +137,8 @@ Reproduce it: [`benchmark/seed.sh`](benchmark/seed.sh) builds the repo, [`benchm
 ## Limits
 - Duplicates are matched by normalized top-level name, so the same logic under a different name slips through.
 - Python imports are checked against the active interpreter, so run it inside your virtualenv.
+- The registry lookup reads metadata only: existence, age, weekly downloads, install scripts. It never reads package code, so an old, popular package that later turns malicious passes. For that, use a dedicated scanner.
+- The lookup only runs when the diff adds a dependency, 8 requests at a time, 4 s timeout each. Offline or on a failed lookup it reports INFO and never blocks; `--offline` skips it.
 - JavaScript, TypeScript and Python only.
 - It reads diffs. It does not run your tests and cannot tell you whether the code is correct.
 

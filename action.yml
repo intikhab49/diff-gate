@@ -1,5 +1,5 @@
 name: diff-gate
-description: Check a pull request's diff for imports that do not resolve, new dependencies, duplicated helpers and untested logic.
+description: Check a pull request's diff for imports that do not resolve, new packages that do not exist or look squatted, new dependencies and duplicated helpers.
 branding:
   icon: git-pull-request
   color: purple
@@ -9,9 +9,13 @@ inputs:
     required: false
     default: ''
   fail-on:
-    description: '"block" fails only on unresolved imports (default). "warn" also fails on WARN findings. "never" only reports.'
+    description: '"block" fails only on BLOCK findings: unresolved imports, missing or squatted packages (default). "warn" also fails on WARN findings. "never" only reports.'
     required: false
     default: block
+  offline:
+    description: '"true" skips the npm/PyPI lookup of new dependencies.'
+    required: false
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -20,6 +24,7 @@ runs:
       env:
         DG_BASE: ${{ inputs.base }}
         DG_FAIL_ON: ${{ inputs.fail-on }}
+        DG_OFFLINE: ${{ inputs.offline }}
         DG_EVENT: ${{ github.event_name }}
         DG_PR_BASE: ${{ github.event.pull_request.base.ref }}
       run: |
