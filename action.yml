@@ -38,6 +38,6 @@ runs:
         { echo '## diff-gate'; echo; echo '```'; echo "$report"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
         case "$DG_FAIL_ON" in
           never) exit 0 ;;
-          warn)  echo "$report" | grep -q '^### ' && exit 1 || exit 0 ;;
+          warn)  echo "$report" | grep -qE '^### (BLOCK|WARN)' && exit 1 || exit 0 ;;
           *)     exit $code ;;
         esac
