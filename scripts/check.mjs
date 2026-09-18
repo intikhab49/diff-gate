@@ -318,4 +318,4 @@ for (const [k, label] of [['block', 'BLOCK (must fix)'], ['warn', 'WARN (fix, or
 if (!added.size) out.push('\nNOTHING TO CHECK: this diff is empty. If a task was meant to change code, it is not done.');
 else if (!findings.block.length && !findings.warn.length) out.push('\nPASS: no unresolved imports, unknown packages, new deps, or duplicate helpers found.');
 console.log(out.join('\n'));
-process.exit(findings.block.length ? 1 : 0);
+process.exitCode = findings.block.length ? 1 : 0; // not process.exit(): on Windows it can abort while fetch sockets close (UV_HANDLE_CLOSING)
