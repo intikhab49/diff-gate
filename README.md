@@ -6,7 +6,7 @@
 
 **Attackers are registering packages that don't exist yet. Your agent writes the import.**
 
-A Claude Code skill and a GitHub Action that read the real `git diff` after an agent finishes and fail on imports that resolve to nothing.
+A Claude Code skill and a GitHub Action that read the real `git diff` after an agent finishes and fail on imports that resolve to nothing, and on new packages that don't exist on npm or PyPI or look squatted.
 
 [![license](https://img.shields.io/badge/license-MIT-111111?style=flat-square)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-0-111111?style=flat-square)](scripts/check.mjs)
@@ -29,27 +29,28 @@ What arrives is not a build error. A build error would be lucky. It is a package
 
 Your agent cannot protect you here. It wrote those imports from memory and has no idea which ones are real. A prompt cannot tell a real package from an imagined one either; you can instruct a model never to invent imports and it will still invent them, because it does not know that it did.
 
-A resolver can. That is all this is.
+A resolver and a registry lookup can. That is all this is.
+
+An import that points at nothing is the easy case. The harder one is an agent that also adds the name to `package.json`, or runs `npm install` on it: the import now resolves, and a check that only looks at your disk passes it. So since v1.1, every dependency the diff adds is also looked up on npm or PyPI.
+
+A real run: the agent wrote `import jwt from "jsonwebtokn"` (one letter off `jsonwebtoken`) and added it to `package.json`.
 
 ```console
-$ node scripts/check.mjs main
-## diff-gate vs main
-7 file(s) changed, 3 new, +214 / -18 lines
+$ node scripts/check.mjs
+## diff-gate vs HEAD
+2 file(s) changed, 1 new, +6 / -1 lines
 
 ### BLOCK (must fix)
-- src/report.ts: import 'pdf-easy-kit' does not resolve (no such file, not a declared dependency, not installed)
-- src/lib/totp.ts: import '@/lib/base32' does not resolve (no such file, not a declared dependency, not installed)
+- package.json: 'jsonwebtokn' does not exist on the npm registry: invented package name. Remove it; never register or install a name to make this pass
 
 ### WARN (fix, or justify in one line)
-- package.json: new dependencies dayjs@^1.11.0: for each, name what it replaces or why the stdlib or existing deps can't do it
-- 'base32Decode' newly defined in src/lib/totp.ts but already exists in tests/support/totp.ts: reuse it or say why not
-
-### INFO
-- 9 branches/loops added across 3 source file(s) and no test file touched
+- package.json: new dependencies jsonwebtokn@^9.0.2: for each, name what it replaces or why the stdlib or existing deps can't do it
 
 $ echo $?
 1
 ```
+
+If someone had already registered `jsonwebtokn`, the name would exist and that first line would not fire. The squat rule would: a package first published under 30 days ago, with under 1,000 downloads a week, that also runs an install script or sits one typo from a popular name, is a BLOCK too.
 
 ## What it checks
 
@@ -130,6 +131,8 @@ Six dependency-trap tickets (xlsx export, timezone conversion, PDF receipt, JWT 
 - **diff-gate's arm wrote the most code.** Acting on its findings adds lines: a test, a real import. If you want less code, that is ponytail's job and its numbers here support it.
 - A third of runs ended with the model writing nothing at all. That is the cheap model, it hits every arm equally, and it means only the large gaps are meaningful.
 
+These numbers are for v1.0. v1.1 moved "untested logic" from WARN to INFO so the agent is no longer pushed to add test code; that has not been re-benchmarked yet.
+
 Reproduce it: [`benchmark/seed.sh`](benchmark/seed.sh) builds the repo, [`benchmark/run.sh`](benchmark/run.sh) and [`benchmark/run-combined.sh`](benchmark/run-combined.sh) run the arms, [`benchmark/results.csv`](benchmark/results.csv) is the raw output (`exit=99` marks a run where the agent changed no code).
 
 **Where it did earn its keep:** copy-pasted TOTP, cookie-jar and member-factory helpers across five test files in a real private repo; an invented `@/lib/...` alias import; and two bugs in its own scoring, found by reading raw diffs instead of trusting the summary.
@@ -141,6 +144,12 @@ Reproduce it: [`benchmark/seed.sh`](benchmark/seed.sh) builds the repo, [`benchm
 - The lookup only runs when the diff adds a dependency, 8 requests at a time, 4 s timeout each. Offline or on a failed lookup it reports INFO and never blocks; `--offline` skips it.
 - JavaScript, TypeScript and Python only.
 - It reads diffs. It does not run your tests and cannot tell you whether the code is correct.
+
+## Changelog
+- **v1.1.1**: on Windows the script could crash after printing the report and exit 127 instead of 1. Fixed.
+- **v1.1.0**: new dependencies are looked up on npm and PyPI: missing or squatted packages BLOCK, obscure or lookalike ones WARN. "Untested logic" is now INFO. Shorter skill description. Action gets an `offline` input.
+- **v1.0.1**: `fail-on: warn` no longer fails on INFO-only reports.
+- **v1.0.0**: first release.
 
 ## Credit
 Built alongside the conversation around [ponytail](https://github.com/DietrichGebert/ponytail) (MIT) and [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills). Those shape what an agent writes. This one checks what it wrote. Use both.
