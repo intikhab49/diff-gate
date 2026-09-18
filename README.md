@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/social-preview.png" alt="diff-gate: catch AI-hallucinated imports before they merge" width="720">
+<img src="docs/social-preview.png" alt="diff-gate v1.1: catch AI-hallucinated imports and packages that do not exist or look squatted, before they merge" width="720">
 
 # diff-gate
 
